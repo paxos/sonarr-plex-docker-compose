@@ -1,52 +1,61 @@
-sabnzbd:
-  image: "linuxserver/sabnzbd"
-  container_name: "sabnzbd"
-  volumes:
-    - "./config/sabnzbd:/config"
-    - "./data/_incoming:/downloads"
-    - "./data/_incomplete:/incomplete-downloads"
-    - "./data/shows:/tvshows"
-    - "./data/movies:/movies"
-  ports:
-    - "8080:8080"
-    - "9090:9090"
-  environment:
-    PGID: 1000
-    PUID: 1000
-  restart: always
+version: '2'
+services:
+  sabnzbd:
+    image: "linuxserver/sabnzbd"
+    container_name: "sabnzbd"
+    volumes:
+      - "./config/sabnzbd:/config"
+      - "/volume1/data/_incoming:/downloads"
+      - "/volume1/data/_incomplete:/incomplete-downloads"
+      - "/volume1/video/shows:/tvshows"
+      - "/volume1/video/movies:/movies"
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    environment:
+      PGID: 100
+      PUID: 1026
+    restart: always
 
-sonarr:
-  image: "linuxserver/sonarr"
-  container_name: "sonarr"
-  volumes:
-    - "./config/sonarr:/config"
-    - "./data/shows:/tv"
-    - "./data/_incoming:/downloads"
-  ports:
-    - "8989:8989"
-  environment:
-    PGID: 1000
-    PUID: 1000
-  restart: always 
-  links:
-    - plex
-    - sabnzbd
+  sonarr:
+    image: "linuxserver/sonarr"
+    container_name: "sonarr"
+    volumes:
+      - "./config/sonarr:/config"
+      - "/volume1/video/shows:/tv"
+      - "/volume1/data/_incoming:/downloads"
+    ports:
+      - "8989:8989"
+    environment:
+      PGID: 100
+      PUID: 1026
+    restart: always 
+    links:
+      - plex
+      - sabnzbd
 
-plex:
-  image: "linuxserver/plex"
-  container_name: "plex"
-  volumes:
-    - "./config/plex:/config"
-    - "./data/shows:/data/tvshows"
-    - "./data/movies:/data/movies"
-  ports:
-   - "32469:32469"
-   - "32469:32469/udp"
- #  - "5353:5353/udp"
- #  - "1900:1900/udp"
-   - "32400:32400"
-   - "32400:32400/udp"
-  environment:
-    PGID: 1000
-    PUID: 1000
-  restart: always   
+  plex:
+    image: "linuxserver/plex"
+    container_name: "plex"
+    volumes:
+      - "./config/plex:/config"
+      - "/volume1/video/shows:/data/tvshows"
+      - "/volume1/video/movies:/data/movies"
+      - "/volume1/video/videos:/data/videos"
+    ports:
+    - "32469:32469"
+    - "32469:32469/udp"
+    - "5353:5353/udp"
+    - "1900:1900/udp"
+    - "32400:32400"
+    - "32400:32400/udp"
+    - "32410:32410/udp"
+    - "32412:32412/udp"
+    - "32413:32413/udp"
+    - "32414:32414/udp"
+    environment:
+      PGID: 100
+      PUID: 1026
+      VERSION: "latest"
+    restart: always   
+    network_mode: "host"
