@@ -16,6 +16,8 @@ services:
       PGID: 100
       PUID: 1026
     restart: always
+    logging:
+      driver: json-file
 
   sonarr:
     image: "linuxserver/sonarr"
@@ -33,6 +35,8 @@ services:
     links:
       - plex
       - sabnzbd
+    logging:
+      driver: json-file
 
   plex:
     image: "linuxserver/plex"
@@ -59,3 +63,5 @@ services:
       VERSION: "latest"
     restart: always   
     network_mode: "host"
+    logging:
+      driver: json-file
