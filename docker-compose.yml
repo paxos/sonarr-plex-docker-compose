@@ -5,63 +5,117 @@ services:
     container_name: "sabnzbd"
     volumes:
       - "./config/sabnzbd:/config"
-      - "/volume1/data/_incoming:/downloads"
-      - "/volume1/data/_incomplete:/incomplete-downloads"
-      - "/volume1/video/shows:/tvshows"
-      - "/volume1/video/movies:/movies"
+      - "/volume2/video/_incoming:/downloads"
+      - "/volume2/video/_incomplete:/incomplete-downloads"
+      - "/volume2/video/shows:/tvshows"
+      - "/volume2/video/movies:/movies"
     ports:
       - "8080:8080"
       - "9090:9090"
     environment:
       PGID: 100
-      PUID: 1026
+      PUID: 1028
     restart: always
     logging:
       driver: json-file
+    mem_limit: 1000m
 
   sonarr:
-    image: "linuxserver/sonarr"
-    container_name: "sonarr"
+    image: "linuxserver/sonarr:latest"
+    container_name: "sonarr3"
     volumes:
       - "./config/sonarr:/config"
-      - "/volume1/video/shows:/tv"
-      - "/volume1/data/_incoming:/downloads"
+      - "/volume2/video/shows:/tv"
+      - "/volume2/video/_incoming:/downloads"
     ports:
       - "8989:8989"
     environment:
       PGID: 100
-      PUID: 1026
+      PUID: 1028
     restart: always 
     links:
-      - plex
       - sabnzbd
     logging:
       driver: json-file
+    mem_limit: 500m
 
-  plex:
-    image: "linuxserver/plex"
-    container_name: "plex"
-    volumes:
-      - "./config/plex:/config"
-      - "/volume1/video/shows:/data/tvshows"
-      - "/volume1/video/movies:/data/movies"
-      - "/volume1/video/videos:/data/videos"
-    ports:
-    - "32469:32469"
-    - "32469:32469/udp"
-    - "5353:5353/udp"
-    - "1900:1900/udp"
-    - "32400:32400"
-    - "32400:32400/udp"
-    - "32410:32410/udp"
-    - "32412:32412/udp"
-    - "32413:32413/udp"
-    - "32414:32414/udp"
+  radarr:
+    image: ghcr.io/linuxserver/radarr
+    container_name: radarr
     environment:
       PGID: 100
-      PUID: 1026
-      VERSION: "latest"
-    restart: always   
-    network_mode: "host"
-    logging:
-      driver: json-file
+      PUID: 1028
+      TZ: "America/Los_Angeles"
+    volumes:
+      - "./config/radarr:/config"
+      - "/volume2/video/movies:/movies"
+      - "/volume2/video/_incoming:/downloads"
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+    mem_limit: 500m
+
+  requestrr:
+    image: darkalfx/requestrr:latest
+    container_name: requestrr
+    environment:
+      PGID: 100
+      PUID: 1028
+    volumes:
+      - "./config/requestrr:/root/config"
+    ports:
+      - 4545:4545
+    links:
+      - radarr
+      - sonarr
+    restart: unless-stopped
+    mem_limit: 500m
+
+  overseerr:
+    image: sctx/overseerr:latest
+    container_name: overseerr
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=America/Los_Angeles
+    ports:
+      - 5055:5055
+    volumes:
+      - "./config/overseerr:/app/config"
+    links:
+      - radarr
+      - sonarr
+    restart: unless-stopped
+    mem_limit: 500m
+
+  tautulli:
+    image: ghcr.io/tautulli/tautulli
+    container_name: tautulli
+    restart: unless-stopped
+    volumes:
+      - "./config/tautulli:/config"
+    environment:
+      - PUID=1028
+      - PGID=100
+      - TZ=America/Los_Angeles
+    ports:
+      - 8181:8181
+    mem_limit: 500m
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr
+    container_name: bazarr
+    environment:
+      - PUID=1028
+      - PGID=100
+      - TZ=Europe/London
+    volumes:
+      - "./config/bazarr:/config"
+      - "/volume2/video/movies:/movies"
+      - "/volume2/video/shows:/tv"
+    ports:
+      - 6767:6767
+    links:
+      - radarr
+      - sonarr
+    mem_limit: 500m
+    restart: unless-stopped
