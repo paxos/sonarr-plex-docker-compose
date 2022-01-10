@@ -107,7 +107,7 @@ services:
     environment:
       - PUID=1028
       - PGID=100
-      - TZ=Europe/London
+      - TZ=America/Los_Angeles
     volumes:
       - "./config/bazarr:/config"
       - "/volume2/video/movies:/movies"
